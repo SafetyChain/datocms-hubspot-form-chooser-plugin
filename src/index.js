@@ -33,9 +33,7 @@ if (isInIframe) {
       const root = ReactDOM.createRoot(document.getElementById('root'));
       
       root.render(
-        <Canvas ctx={ctx}>
-          <HubSpotFormSelector ctx={ctx} />
-        </Canvas>
+        <HubSpotFormSelector ctx={ctx} />
       );
     }
   });

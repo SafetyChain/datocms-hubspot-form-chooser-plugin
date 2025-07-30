@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { Button, TextInput, SelectField, Spinner } from 'datocms-react-ui';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { Canvas, Button, TextInput, Spinner } from 'datocms-react-ui';
 
 const API_ENDPOINT = process.env.NODE_ENV === 'development' 
   ? 'http://localhost:3000/api/hubspot-forms'
@@ -11,9 +11,26 @@ function HubSpotFormSelector({ ctx }) {
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   
-  // Safely get the initial value
-  const initialValue = ctx.fieldPath && ctx.formValues ? ctx.formValues[ctx.fieldPath] : '';
-  const [selectedForm, setSelectedForm] = useState(initialValue || '');
+  // Debug logging
+  console.log('HubSpotFormSelector ctx:', ctx);
+  console.log('fieldPath:', ctx.fieldPath);
+  console.log('formValues:', ctx.formValues);
+  
+  // Safely get the initial value - handle different field path formats
+  let initialValue = '';
+  try {
+    if (ctx.field) {
+      // Use the field's current value
+      initialValue = ctx.field.attributes?.value || '';
+    } else if (ctx.formValues && ctx.fieldPath) {
+      // Try to get from formValues
+      initialValue = ctx.formValues[ctx.fieldPath] || '';
+    }
+  } catch (e) {
+    console.warn('Could not get initial value:', e);
+  }
+  
+  const [selectedForm, setSelectedForm] = useState(initialValue);
 
   // Start auto-resizer
   useEffect(() => {
@@ -71,8 +88,18 @@ function HubSpotFormSelector({ ctx }) {
   // Handle form selection
   const handleSelectForm = (value) => {
     setSelectedForm(value);
-    if (ctx.fieldPath) {
-      ctx.setFieldValue(ctx.fieldPath, value);
+    try {
+      // Try different methods to set the value
+      if (ctx.field && ctx.field.attributes) {
+        // Update field directly
+        ctx.field.attributes.value = value;
+      }
+      if (ctx.setFieldValue && ctx.fieldPath) {
+        // Use setFieldValue if available
+        ctx.setFieldValue(ctx.fieldPath, value);
+      }
+    } catch (e) {
+      console.error('Error setting field value:', e);
     }
   };
 
@@ -81,34 +108,38 @@ function HubSpotFormSelector({ ctx }) {
 
   if (loading && forms.length === 0) {
     return (
-      <div style={{ padding: '20px', textAlign: 'center' }}>
-        <Spinner />
-        <p>Loading forms...</p>
-      </div>
+      <Canvas ctx={ctx}>
+        <div style={{ padding: '20px', textAlign: 'center' }}>
+          <Spinner />
+          <p>Loading forms...</p>
+        </div>
+      </Canvas>
     );
   }
 
   if (error) {
     return (
-      <div style={{ padding: '20px' }}>
-        <div style={{ 
-          background: '#fee', 
-          border: '1px solid #fcc',
-          borderRadius: '4px',
-          padding: '12px',
-          marginBottom: '12px'
-        }}>
-          Error: {error}
+      <Canvas ctx={ctx}>
+        <div style={{ padding: '20px' }}>
+          <div style={{ 
+            background: '#fee', 
+            border: '1px solid #fcc',
+            borderRadius: '4px',
+            padding: '12px',
+            marginBottom: '12px'
+          }}>
+            Error: {error}
+          </div>
+          <Button onClick={() => fetchForms(true)} size="small">
+            Try Again
+          </Button>
         </div>
-        <Button onClick={() => fetchForms(true)} size="small">
-          Try Again
-        </Button>
-      </div>
+      </Canvas>
     );
   }
 
   return (
-    <div>
+    <Canvas ctx={ctx}>
       <div style={{ marginBottom: '16px' }}>
         <TextInput
           value={searchTerm}
@@ -122,22 +153,29 @@ function HubSpotFormSelector({ ctx }) {
       </div>
 
       <div style={{ marginBottom: '16px' }}>
-        <SelectField
+        <select
           value={selectedForm}
-          onChange={handleSelectForm}
-          options={[
-            { label: 'Choose a form...', value: '' },
-            ...filteredForms.map(form => ({
-              label: form.name,
-              value: form.id,
-              hint: new Date(form.createdAt).toLocaleDateString('en-US', {
-                year: 'numeric',
-                month: 'short',
-                day: 'numeric'
-              })
-            }))
-          ]}
-        />
+          onChange={(e) => handleSelectForm(e.target.value)}
+          style={{
+            width: '100%',
+            padding: '8px 12px',
+            border: '1px solid #ddd',
+            borderRadius: '4px',
+            fontSize: '14px',
+            backgroundColor: '#fff',
+            minHeight: '200px',
+            maxHeight: '300px',
+            cursor: 'pointer'
+          }}
+          size="8"
+        >
+          <option value="">Choose a form...</option>
+          {filteredForms.map(form => (
+            <option key={form.id} value={form.id}>
+              {form.name} ({new Date(form.createdAt).toLocaleDateString()})
+            </option>
+          ))}
+        </select>
       </div>
 
       {currentForm && (
@@ -207,7 +245,7 @@ function HubSpotFormSelector({ ctx }) {
           </span>
         )}
       </div>
-    </div>
+    </Canvas>
   );
 }
 
