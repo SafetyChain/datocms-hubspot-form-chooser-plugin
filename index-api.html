@@ -125,20 +125,10 @@
                 plugin.startAutoResizer();
             }
 
-            // Get configuration from plugin parameters
-            const hubspotApiKey = plugin ? plugin.parameters.global.hubspotApiKey : null;
-            const customEndpoint = plugin ? plugin.parameters.instance.apiEndpoint : null;
-            
-            // Configuration - Use custom endpoint or default
-            const API_ENDPOINT = customEndpoint || (window.location.hostname === 'localhost' 
+            // Configuration - Use default API endpoint
+            const API_ENDPOINT = window.location.hostname === 'localhost' 
                 ? 'http://localhost:3000/api/hubspot-forms'
-                : '/api/hubspot-forms');
-
-            if (plugin && !hubspotApiKey) {
-                document.getElementById('error').textContent = 'HubSpot API key not configured. Please add it in the plugin settings.';
-                document.getElementById('error').style.display = 'block';
-                return;
-            }
+                : '/api/hubspot-forms';
 
             const currentValue = plugin ? plugin.getFieldValue(plugin.fieldPath) : null;
             const searchInput = document.getElementById('searchInput');
@@ -158,12 +148,7 @@
 
                     const url = forceRefresh ? `${API_ENDPOINT}?refresh=true` : API_ENDPOINT;
                     
-                    const headers = {};
-                    if (hubspotApiKey) {
-                        headers['X-HubSpot-API-Key'] = hubspotApiKey;
-                    }
-                    
-                    const response = await fetch(url, { headers });
+                    const response = await fetch(url);
                     if (!response.ok) {
                         throw new Error(`Failed to fetch forms: ${response.status}`);
                     }
