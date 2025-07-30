@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client';
 import { Canvas } from 'datocms-react-ui';
 import { connect } from 'datocms-plugin-sdk';
 import HubSpotFormSelector from './HubSpotFormSelector';
+import ConfigScreen from './ConfigScreen';
 
 // Check if we're in an iframe (DatoCMS environment)
 const isInIframe = window.parent !== window;
@@ -10,6 +11,13 @@ const isInIframe = window.parent !== window;
 if (isInIframe) {
   // Production mode - connect to DatoCMS
   connect({
+    renderConfigScreen(ctx) {
+      const root = ReactDOM.createRoot(document.getElementById('root'));
+      
+      root.render(
+        <ConfigScreen ctx={ctx} />
+      );
+    },
     renderFieldExtension(fieldExtensionId, ctx) {
       const root = ReactDOM.createRoot(document.getElementById('root'));
       

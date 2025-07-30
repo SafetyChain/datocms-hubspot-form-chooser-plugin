@@ -27,8 +27,19 @@ function HubSpotFormSelector({ ctx }) {
     setError(null);
     
     try {
+      // Get API key from plugin parameters
+      const apiKey = ctx.plugin?.attributes?.parameters?.hubspotApiKey;
+      
+      if (!apiKey) {
+        throw new Error('HubSpot API key not configured. Please configure it in the plugin settings.');
+      }
+      
       const url = forceRefresh ? `${API_ENDPOINT}?refresh=true` : API_ENDPOINT;
-      const response = await fetch(url);
+      const response = await fetch(url, {
+        headers: {
+          'X-HubSpot-API-Key': apiKey
+        }
+      });
       
       if (!response.ok) {
         throw new Error(`Failed to fetch forms: ${response.status}`);
