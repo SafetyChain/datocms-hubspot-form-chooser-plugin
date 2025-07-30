@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HubSpot Form Selector</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 12px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            font-size: 14px;
+        }
+        .form-selector {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .search-input, .form-select {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+        .form-select {
+            min-height: 200px;
+            max-height: 400px;
+            overflow-y: auto;
+            font-size: 16px;
+            line-height: 1.5;
+            border-radius: 8px;
+            padding-left: 8px;
+        }
+        .form-select option {
+            padding: 6px 12px;
+            margin: 2px 0;
+        }
+        .form-select option:checked {
+            background-color: #0073e6;
+            color: white;
+            border-radius: 6px;
+        }
+        .search-input:focus, .form-select:focus {
+            outline: none;
+            border-color: #0073e6;
+        }
+        .current-form {
+            background: #f5f5f5;
+            padding: 12px;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+        .current-label {
+            font-weight: 600;
+            margin-bottom: 4px;
+            color: #333;
+        }
+        .current-name {
+            color: #0073e6;
+            margin-bottom: 2px;
+        }
+        .current-id {
+            color: #666;
+            font-family: monospace;
+            font-size: 11px;
+        }
+        .error {
+            color: #e74c3c;
+            background: #fee;
+            padding: 12px;
+            border-radius: 4px;
+        }
+        .loading {
+            color: #666;
+            text-align: center;
+            padding: 20px;
+        }
+        .refresh-button {
+            align-self: flex-start;
+            padding: 6px 12px;
+            background: #0073e6;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        .refresh-button:hover {
+            background: #005bb5;
+        }
+        .refresh-button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+    <div id="root">
+        <div class="form-selector">
+            <input 
+                type="text" 
+                id="searchInput" 
+                placeholder="Search forms by name..."
+                class="search-input"
+            />
+            <select id="formSelect" class="form-select" size="6">
+                <option value="" disabled>Loading forms...</option>
+            </select>
+            <div id="currentForm" class="current-form" style="display: none;"></div>
+            <div id="error" class="error" style="display: none;"></div>
+            <button id="refreshButton" class="refresh-button">🔄 Refresh Forms</button>
+        </div>
+    </div>
+    
+    <script>
+        // DatoCMS plugin code
+        (function() {
+            // Configuration
+            const API_ENDPOINT = window.location.hostname === 'localhost' 
+                ? 'http://localhost:3000/api/hubspot-forms'
+                : '/api/hubspot-forms';
+
+            let allForms = [];
+            let currentValue = null;
+            let datoCmsPlugin = null;
+
+            // Initialize when DOM is ready
+            document.addEventListener('DOMContentLoaded', function() {
+                console.log('DOM loaded, initializing plugin...');
+                
+                // Check if we're in an iframe
+                if (window.parent === window) {
+                    console.log('Not in iframe, showing test data');
+                    // Not in iframe, show test mode
+                    showTestMode();
+                } else {
+                    console.log('In iframe, connecting to DatoCMS...');
+                    // In iframe, connect to DatoCMS
+                    connectToDatoCMS();
+                }
+            });
+
+            function connectToDatoCMS() {
+                // Listen for messages from parent
+                window.addEventListener('message', function(event) {
+                    console.log('Received message:', event.data);
+                    
+                    if (event.data && event.data.type === 'datocms:plugin:load') {
+                        initializePlugin(event.data);
+                    }
+                });
+
+                // Tell parent we're ready
+                window.parent.postMessage({ type: 'datocms:plugin:ready' }, '*');
+            }
+
+            function initializePlugin(config) {
+                console.log('Initializing with config:', config);
+                
+                currentValue = config.fieldValue;
+                
+                // Create a simple plugin interface
+                datoCmsPlugin = {
+                    fieldPath: config.fieldPath,
+                    setFieldValue: function(value) {
+                        window.parent.postMessage({
+                            type: 'datocms:plugin:setFieldValue',
+                            fieldPath: config.fieldPath,
+                            value: value
+                        }, '*');
+                    }
+                };
+
+                // Start loading forms
+                loadElements();
+                fetchForms();
+            }
+
+            function showTestMode() {
+                // For testing outside DatoCMS
+                const testForms = [
+                    { id: "123e4567-e89b-12d3-a456-426614174000", name: "Contact Us Form", createdAt: new Date().toISOString() },
+                    { id: "223e4567-e89b-12d3-a456-426614174001", name: "Newsletter Signup", createdAt: new Date().toISOString() },
+                    { id: "323e4567-e89b-12d3-a456-426614174002", name: "Demo Request Form", createdAt: new Date().toISOString() }
+                ];
+                
+                allForms = testForms;
+                loadElements();
+                displayForms(allForms);
+            }
+
+            function loadElements() {
+                const searchInput = document.getElementById('searchInput');
+                const formSelect = document.getElementById('formSelect');
+                const currentFormDiv = document.getElementById('currentForm');
+                const refreshButton = document.getElementById('refreshButton');
+
+                // Search functionality
+                searchInput.addEventListener('input', (e) => {
+                    const searchTerm = e.target.value.toLowerCase().trim();
+                    
+                    if (searchTerm === '') {
+                        displayForms(allForms);
+                    } else {
+                        const filtered = allForms.filter(form => 
+                            form.name.toLowerCase().includes(searchTerm)
+                        );
+                        displayForms(filtered);
+                    }
+                });
+
+                // Handle keyboard navigation
+                searchInput.addEventListener('keydown', (e) => {
+                    const currentIndex = formSelect.selectedIndex;
+                    const optionsCount = formSelect.options.length;
+
+                    switch(e.key) {
+                        case 'ArrowDown':
+                            e.preventDefault();
+                            if (currentIndex < optionsCount - 1) {
+                                formSelect.selectedIndex = currentIndex + 1;
+                            }
+                            break;
+                        
+                        case 'ArrowUp':
+                            e.preventDefault();
+                            if (currentIndex > 0) {
+                                formSelect.selectedIndex = currentIndex - 1;
+                            }
+                            break;
+                        
+                        case 'Enter':
+                            e.preventDefault();
+                            handleFormSelection();
+                            break;
+                    }
+                });
+
+                // Form selection
+                formSelect.addEventListener('change', handleFormSelection);
+
+                // Refresh button
+                refreshButton.addEventListener('click', () => fetchForms(true));
+            }
+
+            function handleFormSelection() {
+                const formSelect = document.getElementById('formSelect');
+                const selectedValue = formSelect.value;
+                
+                if (selectedValue && datoCmsPlugin) {
+                    datoCmsPlugin.setFieldValue(selectedValue);
+                    updateCurrentForm(selectedValue);
+                } else if (selectedValue) {
+                    console.log('Selected form:', selectedValue);
+                    updateCurrentForm(selectedValue);
+                }
+            }
+
+            async function fetchForms(forceRefresh = false) {
+                const errorDiv = document.getElementById('error');
+                const formSelect = document.getElementById('formSelect');
+                const refreshButton = document.getElementById('refreshButton');
+
+                try {
+                    errorDiv.style.display = 'none';
+                    formSelect.innerHTML = '<option value="" disabled>Loading forms...</option>';
+                    refreshButton.disabled = true;
+
+                    const url = forceRefresh ? `${API_ENDPOINT}?refresh=true` : API_ENDPOINT;
+                    const response = await fetch(url);
+                    
+                    if (!response.ok) {
+                        throw new Error(`Failed to fetch forms: ${response.status}`);
+                    }
+
+                    const data = await response.json();
+                    allForms = data.results || [];
+
+                    console.log(`Loaded ${allForms.length} forms`);
+                    
+                    // Update search placeholder
+                    const searchInput = document.getElementById('searchInput');
+                    searchInput.placeholder = `Search ${allForms.length} forms by name...`;
+                    
+                    displayForms(allForms);
+                    updateCurrentForm();
+
+                } catch (error) {
+                    console.error('Error fetching forms:', error);
+                    errorDiv.textContent = `Error: ${error.message}`;
+                    errorDiv.style.display = 'block';
+                    formSelect.innerHTML = '<option value="" disabled>Error loading forms</option>';
+                } finally {
+                    refreshButton.disabled = false;
+                }
+            }
+
+            function displayForms(forms) {
+                const formSelect = document.getElementById('formSelect');
+                formSelect.innerHTML = '';
+                
+                if (forms.length === 0) {
+                    const option = document.createElement('option');
+                    option.value = '';
+                    option.textContent = 'No forms found';
+                    option.disabled = true;
+                    formSelect.appendChild(option);
+                } else {
+                    forms.forEach((form, index) => {
+                        const option = document.createElement('option');
+                        option.value = form.id;
+                        
+                        // Format date if available
+                        let dateStr = '';
+                        if (form.createdAt) {
+                            const date = new Date(form.createdAt);
+                            dateStr = ` (${date.toLocaleDateString()})`;
+                        }
+                        
+                        option.textContent = form.name + dateStr;
+                        
+                        // Auto-select first option or current value
+                        if ((index === 0 && !currentValue) || currentValue === form.id) {
+                            option.selected = true;
+                        }
+                        
+                        formSelect.appendChild(option);
+                    });
+                }
+            }
+
+            function updateCurrentForm(selectedId = null) {
+                const currentFormDiv = document.getElementById('currentForm');
+                const formId = selectedId || currentValue;
+                
+                if (formId) {
+                    const currentForm = allForms.find(f => f.id === formId);
+                    if (currentForm) {
+                        currentFormDiv.innerHTML = `
+                            <div class="current-label">Currently selected:</div>
+                            <div class="current-name">${currentForm.name}</div>
+                            <div class="current-id">ID: ${currentForm.id}</div>
+                        `;
+                        currentFormDiv.style.display = 'block';
+                    }
+                } else {
+                    currentFormDiv.style.display = 'none';
+                }
+            }
+        })();
+    </script>
+</body>
+</html>
