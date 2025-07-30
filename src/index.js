@@ -18,6 +18,17 @@ if (isInIframe) {
         <ConfigScreen ctx={ctx} />
       );
     },
+    manualFieldExtensions(ctx) {
+      return [
+        {
+          id: 'hubspotFormSelector',
+          name: 'HubSpot Form Selector',
+          type: 'editor',
+          fieldTypes: ['string'],
+          configurable: false
+        },
+      ];
+    },
     renderFieldExtension(fieldExtensionId, ctx) {
       const root = ReactDOM.createRoot(document.getElementById('root'));
       
