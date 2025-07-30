@@ -140,13 +140,14 @@
             let filteredForms = [];
 
             // Fetch forms from API
-            async function fetchForms() {
+            async function fetchForms(forceRefresh = false) {
                 try {
                     errorDiv.style.display = 'none';
                     formSelect.innerHTML = '<option value="" disabled>Loading forms...</option>';
                     refreshButton.disabled = true;
 
-                    const response = await fetch(API_ENDPOINT);
+                    const url = forceRefresh ? `${API_ENDPOINT}?refresh=true` : API_ENDPOINT;
+                    const response = await fetch(url);
                     if (!response.ok) {
                         throw new Error(`Failed to fetch forms: ${response.status}`);
                     }
@@ -154,7 +155,15 @@
                     const data = await response.json();
                     allForms = data.results || [];
 
-                    console.log(`Loaded ${allForms.length} forms from HubSpot`);
+                    // Check if data was cached
+                    const cacheStatus = response.headers.get('X-Cache');
+                    const cacheAge = response.headers.get('X-Cache-Age');
+                    
+                    if (cacheStatus === 'HIT') {
+                        console.log(`Loaded ${allForms.length} forms from cache (${cacheAge}s old)`);
+                    } else {
+                        console.log(`Loaded ${allForms.length} forms from HubSpot API`);
+                    }
                     
                     // Update the search placeholder to show total count
                     searchInput.placeholder = `Search ${allForms.length} forms by name...`;
@@ -186,7 +195,16 @@
                     forms.forEach((form, index) => {
                         const option = document.createElement('option');
                         option.value = form.id;
-                        option.textContent = form.name;
+                        
+                        // Format date if available
+                        let dateStr = '';
+                        if (form.createdAt) {
+                            const date = new Date(form.createdAt);
+                            dateStr = ` (${date.toLocaleDateString()})`;
+                        }
+                        
+                        option.textContent = form.name + dateStr;
+                        
                         // Auto-select first option if no current value, or if it matches current value
                         if ((index === 0 && !currentValue) || currentValue === form.id) {
                             option.selected = true;
@@ -284,8 +302,8 @@
                 }
             });
 
-            // Refresh button
-            refreshButton.addEventListener('click', fetchForms);
+            // Refresh button - force refresh to bypass cache
+            refreshButton.addEventListener('click', () => fetchForms(true));
 
             // Initial load
             fetchForms();
