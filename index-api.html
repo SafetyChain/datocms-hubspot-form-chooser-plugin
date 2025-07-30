@@ -156,6 +156,9 @@
 
                     console.log(`Loaded ${allForms.length} forms from HubSpot`);
                     
+                    // Update the search placeholder to show total count
+                    searchInput.placeholder = `Search ${allForms.length} forms by name...`;
+                    
                     displayForms(allForms);
                     updateCurrentForm();
 
