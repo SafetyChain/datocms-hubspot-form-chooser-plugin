@@ -31,6 +31,10 @@ function HubSpotFormSelector({ ctx }) {
     else if (ctx.formValues && ctx.fieldPath) {
       initialValue = ctx.formValues[ctx.fieldPath] || '';
     }
+    
+    if (initialValue) {
+      console.log('Found existing form ID:', initialValue);
+    }
   } catch (e) {
     console.warn('Could not get initial value:', e);
   }
@@ -46,6 +50,17 @@ function HubSpotFormSelector({ ctx }) {
   useEffect(() => {
     fetchForms();
   }, []);
+  
+  // Update selected form when initial value changes or forms load
+  useEffect(() => {
+    if (initialValue && forms.length > 0 && !selectedForm) {
+      const formExists = forms.find(f => f.id === initialValue);
+      if (formExists) {
+        setSelectedForm(initialValue);
+        console.log('Set selected form to saved value:', initialValue, formExists.name);
+      }
+    }
+  }, [initialValue, forms]);
 
   const fetchForms = async (forceRefresh = false) => {
     setLoading(true);
@@ -158,6 +173,21 @@ function HubSpotFormSelector({ ctx }) {
 
   return (
     <Canvas ctx={ctx}>
+      {/* Show current selection if form hasn't loaded yet */}
+      {initialValue && !currentForm && forms.length === 0 && (
+        <div style={{
+          background: '#fef3c7',
+          border: '1px solid #f59e0b',
+          padding: '8px 12px',
+          borderRadius: '4px',
+          marginBottom: '16px',
+          fontSize: '12px',
+          color: '#92400e'
+        }}>
+          Loading saved form: {initialValue}
+        </div>
+      )}
+      
       <div style={{ marginBottom: '16px' }}>
         <TextInput
           value={searchTerm}
