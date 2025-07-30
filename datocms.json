@@ -4,6 +4,7 @@
   "homepage": "https://github.com/SafetyChain/datocms-hubspot-form-chooser-plugin",
   "fieldTypes": ["string"],
   "pluginType": "field_editor",
+  "entryPoint": "https://datocms-hubspot-form-chooser-plugin.vercel.app/index-api.html",
   "parameters": {
     "global": [
       {
