@@ -113,22 +113,24 @@ The plugin uses HubSpot's Marketing API v3:
 - The API key is never exposed to the frontend
 - CORS headers are properly configured
 
-## Troubleshooting
+## Documentation
+
+- 📖 [Development Guide](docs/DEVELOPMENT.md) - Architecture, workflow, and patterns
+- 🔧 [Troubleshooting Guide](docs/TROUBLESHOOTING.md) - Common issues and solutions
+- 🤖 [Claude Context](CLAUDE.md) - AI assistant documentation
+
+## Quick Troubleshooting
 
 **Forms not loading?**
 - Check Vercel function logs for API errors
 - Verify HubSpot API key is correct
 - Ensure private app has `forms` read scope
-- Check browser console for errors
+- See [full troubleshooting guide](docs/TROUBLESHOOTING.md)
 
-**Plugin not appearing in DatoCMS?**
+**Plugin not appearing?**
 - Verify the plugin URL is accessible
-- Make sure you're using the root URL (not `/index.html`)
 - Check that the field type is "Single-line string"
-
-**Cache issues?**
-- Click the refresh button to bypass cache
-- Cache automatically expires after 5 minutes
+- See [development guide](docs/DEVELOPMENT.md#testing-checklist)
 
 ## License
 

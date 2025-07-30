@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Canvas, Button, TextField } from 'datocms-react-ui';
+import 'datocms-react-ui/styles.css';
 
 function ConfigScreen({ ctx }) {
   const [apiKey, setApiKey] = useState(ctx.plugin.attributes.parameters.hubspotApiKey || '');

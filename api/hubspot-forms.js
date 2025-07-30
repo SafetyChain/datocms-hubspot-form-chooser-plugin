@@ -84,16 +84,24 @@ export default async function handler(req, res) {
 
     console.log(`Fetched ${allForms.length} forms across ${pageCount} pages`);
 
+    // Filter out archived forms
+    const activeForms = allForms.filter(form => {
+      const name = form.name.toLowerCase();
+      return !name.includes('[archived]') && !name.includes('[archive]');
+    });
+
+    console.log(`Filtered to ${activeForms.length} active forms (removed ${allForms.length - activeForms.length} archived)`);
+
     // Sort forms by creation date (newest first)
-    allForms.sort((a, b) => {
+    activeForms.sort((a, b) => {
       const dateA = new Date(a.createdAt || 0);
       const dateB = new Date(b.createdAt || 0);
       return dateB - dateA; // Newest first
     });
 
     const responseData = { 
-      results: allForms,
-      total: allForms.length 
+      results: activeForms,
+      total: activeForms.length 
     };
 
     // Update cache

@@ -1,5 +1,7 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Canvas, Button, TextInput, Spinner } from 'datocms-react-ui';
+import 'datocms-react-ui/styles.css';
+import { get } from 'lodash';
 
 const API_ENDPOINT = process.env.NODE_ENV === 'development' 
   ? 'http://localhost:3000/api/hubspot-forms'
@@ -11,40 +13,34 @@ function HubSpotFormSelector({ ctx }) {
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   
-  // Debug logging (removed for production)
-  // console.log('HubSpotFormSelector ctx:', ctx);
-  // console.log('fieldPath:', ctx.fieldPath);
-  // console.log('formValues:', ctx.formValues);
+  // Get current value using lodash get as recommended
+  const currentValue = get(ctx.formValues, ctx.fieldPath) || '';
   
-  // Get initial value from simplified context
-  const initialValue = ctx.value || '';
-  
-  if (initialValue) {
-    console.log('Found existing form ID:', initialValue);
-  }
-  
-  const [selectedForm, setSelectedForm] = useState(initialValue);
+  const [selectedForm, setSelectedForm] = useState(currentValue);
 
-  // Start auto-resizer
+  // Use manual height control to ensure proper iframe height
   useEffect(() => {
-    ctx.startAutoResizer();
-  }, [ctx]);
+    if (ctx.updateHeight) {
+      // Set a height that accommodates all content
+      ctx.updateHeight(600);
+    }
+  }, [ctx, forms, loading, error]);
 
   // Fetch forms on mount
   useEffect(() => {
     fetchForms();
   }, []);
   
-  // Update selected form when initial value changes or forms load
+  // Update selected form when current value changes or forms load
   useEffect(() => {
-    if (initialValue && forms.length > 0 && !selectedForm) {
-      const formExists = forms.find(f => f.id === initialValue);
-      if (formExists) {
-        setSelectedForm(initialValue);
-        console.log('Set selected form to saved value:', initialValue, formExists.name);
+    if (currentValue && forms.length > 0) {
+      const formExists = forms.find(f => f.id === currentValue);
+      if (formExists && selectedForm !== currentValue) {
+        setSelectedForm(currentValue);
+        console.log('Set selected form to saved value:', currentValue, formExists.name);
       }
     }
-  }, [initialValue, forms]);
+  }, [currentValue, forms]);
 
   const fetchForms = async (forceRefresh = false) => {
     setLoading(true);
@@ -94,16 +90,14 @@ function HubSpotFormSelector({ ctx }) {
     console.log('Selected form ID:', value);
     setSelectedForm(value);
     
-    // Use the simplified onChange
-    if (ctx.onChange) {
-      ctx.onChange(value);
-      
-      // Show success feedback
-      if (value && forms.length > 0) {
-        const form = forms.find(f => f.id === value);
-        if (form) {
-          console.log('Form saved:', form.name, '(', value, ')');
-        }
+    // Use setFieldValue as recommended by DatoCMS docs
+    ctx.setFieldValue(ctx.fieldPath, value);
+    
+    // Show success feedback
+    if (value && forms.length > 0) {
+      const form = forms.find(f => f.id === value);
+      if (form) {
+        console.log('Form saved:', form.name, '(', value, ')');
       }
     }
   };
@@ -146,7 +140,7 @@ function HubSpotFormSelector({ ctx }) {
   return (
     <Canvas ctx={ctx}>
       {/* Show current selection if form hasn't loaded yet */}
-      {initialValue && !currentForm && forms.length === 0 && (
+      {currentValue && !currentForm && forms.length === 0 && (
         <div style={{
           background: '#fef3c7',
           border: '1px solid #f59e0b',
@@ -156,23 +150,54 @@ function HubSpotFormSelector({ ctx }) {
           fontSize: '12px',
           color: '#92400e'
         }}>
-          Loading saved form: {initialValue}
+          Loading saved form: {currentValue}
         </div>
       )}
       
-      <div style={{ marginBottom: '16px' }}>
-        <TextInput
+      <div style={{ marginBottom: '16px', position: 'relative' }}>
+        <div style={{
+          position: 'absolute',
+          left: '16px',
+          top: '50%',
+          transform: 'translateY(-50%)',
+          pointerEvents: 'none',
+          color: '#94a3b8'
+        }}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <circle cx="11" cy="11" r="8"></circle>
+            <path d="m21 21-4.35-4.35"></path>
+          </svg>
+        </div>
+        <input
           value={searchTerm}
-          onChange={setSearchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
           placeholder={`Search ${forms.length} forms...`}
-          type="search"
-          textInputProps={{
-            autoComplete: 'off'
+          type="text"
+          style={{
+            width: '100%',
+            padding: '12px 16px 12px 44px',
+            fontSize: '15px',
+            border: '1px solid #e2e8f0',
+            borderRadius: '6px',
+            outline: 'none',
+            transition: 'border-color 0.2s',
+            backgroundColor: '#fff',
+            boxSizing: 'border-box'
+          }}
+          onFocus={(e) => {
+            e.target.style.borderColor = '#0ea5e9';
+          }}
+          onBlur={(e) => {
+            e.target.style.borderColor = '#e2e8f0';
           }}
         />
       </div>
 
-      <div style={{ marginBottom: '16px', position: 'relative' }}>
+      <div style={{ 
+        marginBottom: '16px',
+        maxHeight: '200px',
+        overflow: 'hidden'
+      }}>
         <select
           value={selectedForm}
           onChange={(e) => handleSelectForm(e.target.value)}
@@ -183,11 +208,11 @@ function HubSpotFormSelector({ ctx }) {
             borderRadius: '4px',
             fontSize: '14px',
             backgroundColor: '#fff',
-            height: '250px',
+            height: '200px',
             overflowY: 'auto',
             cursor: 'pointer'
           }}
-          size="10"
+          size={8}
         >
           <option value="">Choose a form...</option>
           {filteredForms.map(form => (
