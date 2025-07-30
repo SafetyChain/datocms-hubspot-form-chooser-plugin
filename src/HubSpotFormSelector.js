@@ -10,7 +10,10 @@ function HubSpotFormSelector({ ctx }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedForm, setSelectedForm] = useState(ctx.formValues[ctx.fieldPath] || '');
+  
+  // Safely get the initial value
+  const initialValue = ctx.fieldPath && ctx.formValues ? ctx.formValues[ctx.fieldPath] : '';
+  const [selectedForm, setSelectedForm] = useState(initialValue || '');
 
   // Start auto-resizer
   useEffect(() => {
@@ -68,7 +71,9 @@ function HubSpotFormSelector({ ctx }) {
   // Handle form selection
   const handleSelectForm = (value) => {
     setSelectedForm(value);
-    ctx.setFieldValue(ctx.fieldPath, value);
+    if (ctx.fieldPath) {
+      ctx.setFieldValue(ctx.fieldPath, value);
+    }
   };
 
   // Get selected form details

@@ -52,6 +52,13 @@ if (isInIframe) {
     },
     startAutoResizer: () => {
       console.log('Auto resizer started (mock)');
+    },
+    plugin: {
+      attributes: {
+        parameters: {
+          hubspotApiKey: '' // Add your test API key here for local testing
+        }
+      }
     }
   };
   
