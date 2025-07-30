@@ -103,25 +103,33 @@ function HubSpotFormSelector({ ctx }) {
   }
 
   return (
-    <div style={{ padding: '12px' }}>
-      <div style={{ marginBottom: '12px' }}>
+    <div>
+      <div style={{ marginBottom: '16px' }}>
         <TextInput
           value={searchTerm}
           onChange={setSearchTerm}
-          placeholder={`Search ${forms.length} forms by name...`}
+          placeholder={`Search ${forms.length} forms...`}
           type="search"
+          textInputProps={{
+            autoComplete: 'off'
+          }}
         />
       </div>
 
-      <div style={{ marginBottom: '12px' }}>
+      <div style={{ marginBottom: '16px' }}>
         <SelectField
           value={selectedForm}
           onChange={handleSelectForm}
           options={[
-            { label: 'Select a form...', value: '' },
+            { label: 'Choose a form...', value: '' },
             ...filteredForms.map(form => ({
-              label: `${form.name} (${new Date(form.createdAt).toLocaleDateString()})`,
-              value: form.id
+              label: form.name,
+              value: form.id,
+              hint: new Date(form.createdAt).toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric'
+              })
             }))
           ]}
         />
@@ -129,37 +137,71 @@ function HubSpotFormSelector({ ctx }) {
 
       {currentForm && (
         <div style={{
-          background: '#f5f5f5',
-          padding: '12px',
-          borderRadius: '4px',
-          fontSize: '12px',
-          marginBottom: '12px'
+          background: 'linear-gradient(to right, #f8fafc, #f1f5f9)',
+          border: '1px solid #e2e8f0',
+          padding: '16px',
+          borderRadius: '6px',
+          marginBottom: '16px'
         }}>
-          <div style={{ fontWeight: 600, marginBottom: '4px' }}>
-            Currently selected:
+          <div style={{ 
+            fontSize: '11px',
+            fontWeight: '600',
+            textTransform: 'uppercase',
+            letterSpacing: '0.05em',
+            color: '#64748b',
+            marginBottom: '8px'
+          }}>
+            Selected Form
           </div>
-          <div style={{ color: '#0073e6', marginBottom: '2px' }}>
+          <div style={{ 
+            fontSize: '14px',
+            fontWeight: '500',
+            color: '#0f172a',
+            marginBottom: '4px'
+          }}>
             {currentForm.name}
           </div>
           <div style={{ 
-            color: '#666',
-            fontFamily: 'monospace',
-            fontSize: '11px',
-            wordBreak: 'break-all'
+            fontSize: '12px',
+            color: '#64748b',
+            fontFamily: 'ui-monospace, SFMono-Regular, "SF Mono", Consolas, "Liberation Mono", Menlo, monospace',
+            wordBreak: 'break-all',
+            marginTop: '8px',
+            padding: '8px',
+            backgroundColor: 'rgba(255, 255, 255, 0.5)',
+            borderRadius: '4px'
           }}>
-            ID: {currentForm.id}
+            {currentForm.id}
           </div>
         </div>
       )}
 
-      <Button 
-        onClick={() => fetchForms(true)} 
-        size="small"
-        buttonType="muted"
-        leftIcon={<span>🔄</span>}
-      >
-        Refresh Forms
-      </Button>
+      <div style={{ display: 'flex', gap: '8px' }}>
+        <Button 
+          onClick={() => fetchForms(true)} 
+          size="small"
+          buttonType="muted"
+          leftIcon={
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M21 2v6h-6M3 12a9 9 0 0 1 15-6.7L21 8M3 22v-6h6M21 12a9 9 0 0 1-15 6.7L3 16" />
+            </svg>
+          }
+        >
+          Refresh
+        </Button>
+        
+        {forms.length > 0 && (
+          <span style={{
+            fontSize: '12px',
+            color: '#64748b',
+            display: 'flex',
+            alignItems: 'center',
+            marginLeft: '8px'
+          }}>
+            {forms.length} forms available
+          </span>
+        )}
+      </div>
     </div>
   );
 }
