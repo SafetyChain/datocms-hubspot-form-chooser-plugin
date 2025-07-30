@@ -32,8 +32,29 @@ if (isInIframe) {
     renderFieldExtension(fieldExtensionId, ctx) {
       const root = ReactDOM.createRoot(document.getElementById('root'));
       
+      // Create a simplified context that provides what we need
+      const fieldContext = {
+        ...ctx,
+        value: ctx.field?.attributes?.value || ctx.formValues?.[ctx.fieldPath] || '',
+        onChange: (newValue) => {
+          // Try multiple ways to update the value
+          if (ctx.field?.attributes) {
+            ctx.field.attributes.value = newValue;
+          }
+          if (ctx.setFieldValue) {
+            try {
+              ctx.setFieldValue(ctx.fieldPath, newValue);
+            } catch (e) {
+              console.warn('setFieldValue failed:', e);
+            }
+          }
+        },
+        startAutoResizer: ctx.startAutoResizer || (() => {}),
+        plugin: ctx.plugin
+      };
+      
       root.render(
-        <HubSpotFormSelector ctx={ctx} />
+        <HubSpotFormSelector ctx={fieldContext} />
       );
     }
   });

@@ -16,27 +16,11 @@ function HubSpotFormSelector({ ctx }) {
   // console.log('fieldPath:', ctx.fieldPath);
   // console.log('formValues:', ctx.formValues);
   
-  // Safely get the initial value - handle different field path formats
-  let initialValue = '';
-  try {
-    // First try the value prop (most common)
-    if (ctx.value !== undefined) {
-      initialValue = ctx.value || '';
-    }
-    // Then try field attributes
-    else if (ctx.field?.attributes?.value) {
-      initialValue = ctx.field.attributes.value;
-    }
-    // Finally try formValues
-    else if (ctx.formValues && ctx.fieldPath) {
-      initialValue = ctx.formValues[ctx.fieldPath] || '';
-    }
-    
-    if (initialValue) {
-      console.log('Found existing form ID:', initialValue);
-    }
-  } catch (e) {
-    console.warn('Could not get initial value:', e);
+  // Get initial value from simplified context
+  const initialValue = ctx.value || '';
+  
+  if (initialValue) {
+    console.log('Found existing form ID:', initialValue);
   }
   
   const [selectedForm, setSelectedForm] = useState(initialValue);
@@ -110,19 +94,9 @@ function HubSpotFormSelector({ ctx }) {
     console.log('Selected form ID:', value);
     setSelectedForm(value);
     
-    try {
-      // Use the onChange callback if available
-      if (ctx.onChange) {
-        ctx.onChange(value);
-      }
-      // Also try setFieldValue
-      else if (ctx.setFieldValue && ctx.fieldPath) {
-        ctx.setFieldValue(ctx.fieldPath, value);
-      }
-      // Update field directly as last resort
-      else if (ctx.field && ctx.field.attributes) {
-        ctx.field.attributes.value = value;
-      }
+    // Use the simplified onChange
+    if (ctx.onChange) {
+      ctx.onChange(value);
       
       // Show success feedback
       if (value && forms.length > 0) {
@@ -131,8 +105,6 @@ function HubSpotFormSelector({ ctx }) {
           console.log('Form saved:', form.name, '(', value, ')');
         }
       }
-    } catch (e) {
-      console.error('Error setting field value:', e);
     }
   };
 
@@ -200,7 +172,7 @@ function HubSpotFormSelector({ ctx }) {
         />
       </div>
 
-      <div style={{ marginBottom: '16px' }}>
+      <div style={{ marginBottom: '16px', position: 'relative' }}>
         <select
           value={selectedForm}
           onChange={(e) => handleSelectForm(e.target.value)}
@@ -211,11 +183,11 @@ function HubSpotFormSelector({ ctx }) {
             borderRadius: '4px',
             fontSize: '14px',
             backgroundColor: '#fff',
-            minHeight: '200px',
-            maxHeight: '300px',
+            height: '250px',
+            overflowY: 'auto',
             cursor: 'pointer'
           }}
-          size="8"
+          size="10"
         >
           <option value="">Choose a form...</option>
           {filteredForms.map(form => (
