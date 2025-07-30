@@ -21,8 +21,8 @@ function HubSpotFormSelector({ ctx }) {
   // Use manual height control to ensure proper iframe height
   useEffect(() => {
     if (ctx.updateHeight) {
-      // Set a height that accommodates all content
-      ctx.updateHeight(600);
+      // Set a height that fits content without extra space
+      ctx.updateHeight(480);
     }
   }, [ctx, forms, loading, error]);
 
@@ -139,6 +139,17 @@ function HubSpotFormSelector({ ctx }) {
 
   return (
     <Canvas ctx={ctx}>
+      <h2 style={{
+        fontSize: '16px',
+        fontWeight: 'bold',
+        textTransform: 'uppercase',
+        margin: '0 0 20px 0',
+        color: '#0f172a',
+        letterSpacing: '0.5px'
+      }}>
+        SafetyChain HubSpot Form Search Plugin
+      </h2>
+      
       {/* Show current selection if form hasn't loaded yet */}
       {currentValue && !currentForm && forms.length === 0 && (
         <div style={{
