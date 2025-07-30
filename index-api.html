@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HubSpot Form Selector</title>
+    <script src="https://unpkg.com/datocms-plugins-sdk@1.0.3/dist/sdk.js"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 12px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            font-size: 14px;
+        }
+        .form-selector {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .search-input, .form-select {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+        .form-select {
+            min-height: 200px;
+            max-height: 400px;
+            overflow-y: auto;
+            font-size: 16px;
+            line-height: 1.5;
+            border-radius: 8px;
+            padding-left: 8px;
+        }
+        .form-select option {
+            padding: 6px 12px;
+            margin: 2px 0;
+        }
+        .form-select option:checked {
+            background-color: #0073e6;
+            color: white;
+            border-radius: 6px;
+        }
+        .search-input:focus, .form-select:focus {
+            outline: none;
+            border-color: #0073e6;
+        }
+        .current-form {
+            background: #f5f5f5;
+            padding: 12px;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+        .current-label {
+            font-weight: 600;
+            margin-bottom: 4px;
+            color: #333;
+        }
+        .current-name {
+            color: #0073e6;
+            margin-bottom: 2px;
+        }
+        .current-id {
+            color: #666;
+            font-family: monospace;
+            font-size: 11px;
+        }
+        .error {
+            color: #e74c3c;
+            background: #fee;
+            padding: 12px;
+            border-radius: 4px;
+        }
+        .loading {
+            color: #666;
+            text-align: center;
+            padding: 20px;
+        }
+        .refresh-button {
+            align-self: flex-start;
+            padding: 6px 12px;
+            background: #0073e6;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        .refresh-button:hover {
+            background: #005bb5;
+        }
+        .refresh-button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+    <div id="root">
+        <div class="form-selector">
+            <input 
+                type="text" 
+                id="searchInput" 
+                placeholder="Search forms by name..."
+                class="search-input"
+            />
+            <select id="formSelect" class="form-select" size="6">
+                <option value="" disabled>Loading forms...</option>
+            </select>
+            <div id="currentForm" class="current-form" style="display: none;"></div>
+            <div id="error" class="error" style="display: none;"></div>
+            <button id="refreshButton" class="refresh-button">🔄 Refresh Forms</button>
+        </div>
+    </div>
+    <script>
+        // Test if DatoCMS SDK is available, otherwise run in standalone mode
+        const isInDatoCMS = typeof window.DatoCmsPlugin !== 'undefined';
+        
+        // Configuration - Update this with your API endpoint
+        const API_ENDPOINT = window.location.hostname === 'localhost' 
+            ? 'http://localhost:3000/api/hubspot-forms'
+            : '/api/hubspot-forms';
+
+        let allForms = [];
+
+        function initPlugin(plugin = null) {
+            if (plugin) {
+                plugin.startAutoResizer();
+            }
+
+            const currentValue = plugin ? plugin.getFieldValue(plugin.fieldPath) : null;
+            const searchInput = document.getElementById('searchInput');
+            const formSelect = document.getElementById('formSelect');
+            const currentFormDiv = document.getElementById('currentForm');
+            const errorDiv = document.getElementById('error');
+            const refreshButton = document.getElementById('refreshButton');
+            
+            let filteredForms = [];
+
+            // Fetch forms from API
+            async function fetchForms() {
+                try {
+                    errorDiv.style.display = 'none';
+                    formSelect.innerHTML = '<option value="" disabled>Loading forms...</option>';
+                    refreshButton.disabled = true;
+
+                    const response = await fetch(API_ENDPOINT);
+                    if (!response.ok) {
+                        throw new Error(`Failed to fetch forms: ${response.status}`);
+                    }
+
+                    const data = await response.json();
+                    allForms = data.results || [];
+
+                    console.log(`Loaded ${allForms.length} forms from HubSpot`);
+                    
+                    displayForms(allForms);
+                    updateCurrentForm();
+
+                } catch (error) {
+                    console.error('Error fetching forms:', error);
+                    errorDiv.textContent = `Error: ${error.message}`;
+                    errorDiv.style.display = 'block';
+                    formSelect.innerHTML = '<option value="" disabled>Error loading forms</option>';
+                } finally {
+                    refreshButton.disabled = false;
+                }
+            }
+
+            // Display forms in select
+            function displayForms(forms) {
+                formSelect.innerHTML = '';
+                
+                if (forms.length === 0) {
+                    const option = document.createElement('option');
+                    option.value = '';
+                    option.textContent = 'No forms found';
+                    option.disabled = true;
+                    formSelect.appendChild(option);
+                } else {
+                    forms.forEach((form, index) => {
+                        const option = document.createElement('option');
+                        option.value = form.id;
+                        option.textContent = form.name;
+                        // Auto-select first option if no current value, or if it matches current value
+                        if ((index === 0 && !currentValue) || currentValue === form.id) {
+                            option.selected = true;
+                        }
+                        formSelect.appendChild(option);
+                    });
+                }
+                
+                filteredForms = forms;
+            }
+
+            // Update current form display
+            function updateCurrentForm(selectedId = null) {
+                const formId = selectedId || currentValue;
+                if (formId) {
+                    const currentForm = allForms.find(f => f.id === formId);
+                    if (currentForm) {
+                        currentFormDiv.innerHTML = `
+                            <div class="current-label">Currently selected:</div>
+                            <div class="current-name">${currentForm.name}</div>
+                            <div class="current-id">ID: ${currentForm.id}</div>
+                        `;
+                        currentFormDiv.style.display = 'block';
+                    } else if (selectedId) {
+                        currentFormDiv.innerHTML = `
+                            <div class="current-label">Selected form ID:</div>
+                            <div class="current-id">${formId}</div>
+                            <div class="error">Form not found in HubSpot</div>
+                        `;
+                        currentFormDiv.style.display = 'block';
+                    }
+                } else {
+                    currentFormDiv.style.display = 'none';
+                }
+            }
+
+            // Search functionality
+            searchInput.addEventListener('input', (e) => {
+                const searchTerm = e.target.value.toLowerCase().trim();
+                
+                if (searchTerm === '') {
+                    displayForms(allForms);
+                } else {
+                    const filtered = allForms.filter(form => 
+                        form.name.toLowerCase().includes(searchTerm)
+                    );
+                    displayForms(filtered);
+                }
+            });
+
+            // Handle keyboard navigation in search input
+            searchInput.addEventListener('keydown', (e) => {
+                const currentIndex = formSelect.selectedIndex;
+                const optionsCount = formSelect.options.length;
+
+                switch(e.key) {
+                    case 'ArrowDown':
+                        e.preventDefault();
+                        if (currentIndex < optionsCount - 1) {
+                            formSelect.selectedIndex = currentIndex + 1;
+                        }
+                        break;
+                    
+                    case 'ArrowUp':
+                        e.preventDefault();
+                        if (currentIndex > 0) {
+                            formSelect.selectedIndex = currentIndex - 1;
+                        }
+                        break;
+                    
+                    case 'Enter':
+                        e.preventDefault();
+                        const selectedOption = formSelect.options[formSelect.selectedIndex];
+                        if (selectedOption && !selectedOption.disabled) {
+                            const selectedValue = selectedOption.value;
+                            if (selectedValue) {
+                                if (plugin) {
+                                    plugin.setFieldValue(plugin.fieldPath, selectedValue);
+                                }
+                                updateCurrentForm(selectedValue);
+                            }
+                        }
+                        break;
+                }
+            });
+
+            // Form selection handler
+            formSelect.addEventListener('change', (e) => {
+                const selectedValue = e.target.value;
+                if (selectedValue) {
+                    if (plugin) {
+                        plugin.setFieldValue(plugin.fieldPath, selectedValue);
+                    }
+                    updateCurrentForm(selectedValue);
+                }
+            });
+
+            // Refresh button
+            refreshButton.addEventListener('click', fetchForms);
+
+            // Initial load
+            fetchForms();
+        }
+
+        // Initialize based on environment
+        if (isInDatoCMS) {
+            window.DatoCmsPlugin.init(initPlugin);
+        } else {
+            // Standalone mode for local testing
+            document.addEventListener('DOMContentLoaded', () => {
+                initPlugin(null);
+                console.log('Running in standalone mode for testing');
+            });
+        }
+    </script>
+</body>
+</html>

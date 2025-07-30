@@ -1,0 +1,7 @@
+{
+  "functions": {
+    "api/hubspot-forms.js": {
+      "maxDuration": 10
+    }
+  }
+}
