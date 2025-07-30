@@ -11,19 +11,24 @@ function HubSpotFormSelector({ ctx }) {
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   
-  // Debug logging
-  console.log('HubSpotFormSelector ctx:', ctx);
-  console.log('fieldPath:', ctx.fieldPath);
-  console.log('formValues:', ctx.formValues);
+  // Debug logging (removed for production)
+  // console.log('HubSpotFormSelector ctx:', ctx);
+  // console.log('fieldPath:', ctx.fieldPath);
+  // console.log('formValues:', ctx.formValues);
   
   // Safely get the initial value - handle different field path formats
   let initialValue = '';
   try {
-    if (ctx.field) {
-      // Use the field's current value
-      initialValue = ctx.field.attributes?.value || '';
-    } else if (ctx.formValues && ctx.fieldPath) {
-      // Try to get from formValues
+    // First try the value prop (most common)
+    if (ctx.value !== undefined) {
+      initialValue = ctx.value || '';
+    }
+    // Then try field attributes
+    else if (ctx.field?.attributes?.value) {
+      initialValue = ctx.field.attributes.value;
+    }
+    // Finally try formValues
+    else if (ctx.formValues && ctx.fieldPath) {
       initialValue = ctx.formValues[ctx.fieldPath] || '';
     }
   } catch (e) {
@@ -87,16 +92,29 @@ function HubSpotFormSelector({ ctx }) {
 
   // Handle form selection
   const handleSelectForm = (value) => {
+    console.log('Selected form ID:', value);
     setSelectedForm(value);
+    
     try {
-      // Try different methods to set the value
-      if (ctx.field && ctx.field.attributes) {
-        // Update field directly
+      // Use the onChange callback if available
+      if (ctx.onChange) {
+        ctx.onChange(value);
+      }
+      // Also try setFieldValue
+      else if (ctx.setFieldValue && ctx.fieldPath) {
+        ctx.setFieldValue(ctx.fieldPath, value);
+      }
+      // Update field directly as last resort
+      else if (ctx.field && ctx.field.attributes) {
         ctx.field.attributes.value = value;
       }
-      if (ctx.setFieldValue && ctx.fieldPath) {
-        // Use setFieldValue if available
-        ctx.setFieldValue(ctx.fieldPath, value);
+      
+      // Show success feedback
+      if (value && forms.length > 0) {
+        const form = forms.find(f => f.id === value);
+        if (form) {
+          console.log('Form saved:', form.name, '(', value, ')');
+        }
       }
     } catch (e) {
       console.error('Error setting field value:', e);
@@ -178,43 +196,29 @@ function HubSpotFormSelector({ ctx }) {
         </select>
       </div>
 
-      {currentForm && (
+      {selectedForm && currentForm && (
         <div style={{
-          background: 'linear-gradient(to right, #f8fafc, #f1f5f9)',
-          border: '1px solid #e2e8f0',
-          padding: '16px',
-          borderRadius: '6px',
-          marginBottom: '16px'
+          background: '#f0f9ff',
+          border: '1px solid #0284c7',
+          padding: '12px',
+          borderRadius: '4px',
+          marginBottom: '16px',
+          fontSize: '13px'
         }}>
           <div style={{ 
-            fontSize: '11px',
-            fontWeight: '600',
-            textTransform: 'uppercase',
-            letterSpacing: '0.05em',
-            color: '#64748b',
-            marginBottom: '8px'
-          }}>
-            Selected Form
-          </div>
-          <div style={{ 
-            fontSize: '14px',
             fontWeight: '500',
-            color: '#0f172a',
+            color: '#0c4a6e',
             marginBottom: '4px'
           }}>
-            {currentForm.name}
+            ✓ Selected: {currentForm.name}
           </div>
           <div style={{ 
-            fontSize: '12px',
+            fontSize: '11px',
             color: '#64748b',
-            fontFamily: 'ui-monospace, SFMono-Regular, "SF Mono", Consolas, "Liberation Mono", Menlo, monospace',
-            wordBreak: 'break-all',
-            marginTop: '8px',
-            padding: '8px',
-            backgroundColor: 'rgba(255, 255, 255, 0.5)',
-            borderRadius: '4px'
+            fontFamily: 'monospace',
+            wordBreak: 'break-all'
           }}>
-            {currentForm.id}
+            ID: {currentForm.id}
           </div>
         </div>
       )}
