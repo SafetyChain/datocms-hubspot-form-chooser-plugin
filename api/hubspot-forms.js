@@ -16,10 +16,11 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const HUBSPOT_API_KEY = process.env.HUBSPOT_API_KEY;
+  // Get API key from header (sent by plugin) or fall back to environment variable
+  const HUBSPOT_API_KEY = req.headers['x-hubspot-api-key'] || process.env.HUBSPOT_API_KEY;
 
   if (!HUBSPOT_API_KEY) {
-    return res.status(500).json({ error: 'HubSpot API key not configured' });
+    return res.status(500).json({ error: 'HubSpot API key not provided' });
   }
 
   // Check if we should force refresh

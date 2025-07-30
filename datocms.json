@@ -1,0 +1,29 @@
+{
+  "name": "HubSpot Form Selector",
+  "description": "Select HubSpot forms by name instead of copying IDs",
+  "homepage": "https://github.com/SafetyChain/datocms-hubspot-form-chooser-plugin",
+  "fieldTypes": ["string"],
+  "pluginType": "field_editor",
+  "parameters": {
+    "global": [
+      {
+        "id": "hubspotApiKey",
+        "label": "HubSpot Private App Token",
+        "type": "string",
+        "required": true,
+        "hint": "Your HubSpot private app access token with 'forms' read scope",
+        "default": ""
+      }
+    ],
+    "instance": [
+      {
+        "id": "apiEndpoint",
+        "label": "API Endpoint URL (Optional)",
+        "type": "string",
+        "required": false,
+        "hint": "Override the default API endpoint if needed",
+        "default": ""
+      }
+    ]
+  }
+}

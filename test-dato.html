@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DatoCMS Plugin Test</title>
+    <script src="https://unpkg.com/datocms-plugins-sdk/dist/sdk.js"></script>
+</head>
+<body>
+    <div id="root">
+        <h3>DatoCMS Plugin Test</h3>
+        <p>If you see this message, the plugin is loading.</p>
+        <div id="status">Initializing...</div>
+    </div>
+    <script>
+        console.log('Plugin script loaded');
+        
+        if (typeof window.DatoCmsPlugin !== 'undefined') {
+            console.log('DatoCMS SDK found');
+            
+            window.DatoCmsPlugin.init((plugin) => {
+                console.log('Plugin initialized:', plugin);
+                document.getElementById('status').textContent = 'Plugin initialized successfully!';
+                
+                // Log plugin context
+                console.log('Field value:', plugin.getFieldValue(plugin.fieldPath));
+                console.log('Field path:', plugin.fieldPath);
+                console.log('Parameters:', plugin.parameters);
+            });
+        } else {
+            console.log('DatoCMS SDK not found - running outside DatoCMS');
+            document.getElementById('status').textContent = 'Running outside DatoCMS';
+        }
+    </script>
+</body>
+</html>

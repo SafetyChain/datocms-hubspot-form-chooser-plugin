@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>HubSpot Form Selector</title>
-    <script src="https://unpkg.com/datocms-plugins-sdk@1.0.3/dist/sdk.js"></script>
+    <script src="https://unpkg.com/datocms-plugins-sdk/dist/sdk.js"></script>
     <style>
         body {
             margin: 0;
@@ -118,16 +118,26 @@
         // Test if DatoCMS SDK is available, otherwise run in standalone mode
         const isInDatoCMS = typeof window.DatoCmsPlugin !== 'undefined';
         
-        // Configuration - Update this with your API endpoint
-        const API_ENDPOINT = window.location.hostname === 'localhost' 
-            ? 'http://localhost:3000/api/hubspot-forms'
-            : '/api/hubspot-forms';
-
         let allForms = [];
 
         function initPlugin(plugin = null) {
             if (plugin) {
                 plugin.startAutoResizer();
+            }
+
+            // Get configuration from plugin parameters
+            const hubspotApiKey = plugin ? plugin.parameters.global.hubspotApiKey : null;
+            const customEndpoint = plugin ? plugin.parameters.instance.apiEndpoint : null;
+            
+            // Configuration - Use custom endpoint or default
+            const API_ENDPOINT = customEndpoint || (window.location.hostname === 'localhost' 
+                ? 'http://localhost:3000/api/hubspot-forms'
+                : '/api/hubspot-forms');
+
+            if (plugin && !hubspotApiKey) {
+                document.getElementById('error').textContent = 'HubSpot API key not configured. Please add it in the plugin settings.';
+                document.getElementById('error').style.display = 'block';
+                return;
             }
 
             const currentValue = plugin ? plugin.getFieldValue(plugin.fieldPath) : null;
@@ -147,7 +157,13 @@
                     refreshButton.disabled = true;
 
                     const url = forceRefresh ? `${API_ENDPOINT}?refresh=true` : API_ENDPOINT;
-                    const response = await fetch(url);
+                    
+                    const headers = {};
+                    if (hubspotApiKey) {
+                        headers['X-HubSpot-API-Key'] = hubspotApiKey;
+                    }
+                    
+                    const response = await fetch(url, { headers });
                     if (!response.ok) {
                         throw new Error(`Failed to fetch forms: ${response.status}`);
                     }
