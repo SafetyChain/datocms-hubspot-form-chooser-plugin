@@ -1,10 +1,10 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { Canvas } from 'datocms-react-ui';
-import { connectToParent } from 'datocms-plugin-sdk';
+import { connect } from 'datocms-plugin-sdk';
 import HubSpotFormSelector from './HubSpotFormSelector';
 
-connectToParent({
+connect({
   renderFieldExtension(fieldExtensionId, ctx) {
     const root = ReactDOM.createRoot(document.getElementById('root'));
     

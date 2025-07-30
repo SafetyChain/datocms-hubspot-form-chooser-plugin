@@ -1,14 +1,15 @@
 # DatoCMS HubSpot Form Chooser Plugin
 
-A DatoCMS plugin that allows content editors to select HubSpot forms by name instead of manually copying form IDs.
+A React-based DatoCMS plugin that allows content editors to select HubSpot forms by name instead of manually copying form IDs.
 
 ## Features
 
 - 🔍 **Search forms by name** - Type to filter through your HubSpot forms
-- ⌨️ **Keyboard navigation** - Use arrow keys and Enter for quick selection
+- 🎯 **Smart sorting** - Newest forms appear first
 - 🔄 **Real-time updates** - Fetches forms directly from HubSpot API
-- 🎨 **Clean UI** - Matches DatoCMS design patterns
-- 🔒 **Secure** - API key never exposed to frontend
+- 💾 **5-minute cache** - Reduces API calls for better performance
+- 🎨 **Native DatoCMS UI** - Uses official React components
+- 🔒 **Secure** - API key stored in environment variables
 
 ## Setup
 
@@ -29,7 +30,9 @@ Or manually:
 ```bash
 git clone https://github.com/SafetyChain/datocms-hubspot-form-chooser-plugin.git
 cd datocms-hubspot-form-chooser-plugin
-vercel
+npm install
+npm run build
+vercel --prod
 ```
 
 ### 3. Configure Environment Variables
@@ -44,9 +47,8 @@ In Vercel dashboard:
 1. Go to your DatoCMS project
 2. Navigate to Settings → Plugins
 3. Click "Add private plugin"
-4. Enter your plugin URL: `https://your-project.vercel.app/index-api.html`
-5. Configure plugin settings if needed
-6. Apply to fields that store HubSpot form IDs
+4. Enter your plugin URL: `https://your-project.vercel.app`
+5. Apply to Single-line string fields that store HubSpot form IDs
 
 ## Local Development
 
@@ -55,48 +57,78 @@ In Vercel dashboard:
 git clone https://github.com/SafetyChain/datocms-hubspot-form-chooser-plugin.git
 cd datocms-hubspot-form-chooser-plugin
 
+# Install dependencies
+npm install
+
 # Create .env.local
 echo "HUBSPOT_API_KEY=your-token-here" > .env.local
 
-# Run locally
-vercel dev
+# Run development server
+npm start
 
-# Test the plugin
-open http://localhost:3000/test.html
+# Build for production
+npm run build
 ```
 
-## Files
+## Project Structure
 
-- `index.html` - Main plugin file with hardcoded forms (for testing)
-- `index-api.html` - Production plugin that fetches from API
-- `test.html` - Standalone test page
-- `api/hubspot-forms.js` - Vercel serverless function
-- `.env.local` - Local environment variables (git ignored)
+```
+├── src/
+│   ├── index.js              # Plugin entry point
+│   ├── index.html            # HTML template
+│   └── HubSpotFormSelector.js # Main React component
+├── api/
+│   └── hubspot-forms.js      # Vercel serverless function
+├── dist/                     # Build output (git ignored)
+├── package.json              # Dependencies and scripts
+├── webpack.config.js         # Webpack configuration
+└── vercel.json              # Vercel deployment config
+```
 
 ## Usage
 
-1. **Search**: Start typing to filter forms
-2. **Navigate**: Use ↑↓ arrow keys to move through results
-3. **Select**: Press Enter or click to select a form
-4. **View**: Selected form ID is saved to DatoCMS field
+1. **Search**: Start typing to filter forms by name
+2. **Select**: Click on a form to select it
+3. **View details**: See the selected form name and ID
+4. **Refresh**: Click the refresh button to fetch latest forms
+
+The plugin automatically:
+- Sorts forms by creation date (newest first)
+- Shows creation date next to each form
+- Caches results for 5 minutes
+- Saves just the form ID to your DatoCMS field
+
+## API Details
+
+The plugin uses HubSpot's Marketing API v3:
+- Endpoint: `GET /marketing/v3/forms`
+- Pagination: Fetches up to 2000 forms (20 pages)
+- Caching: 5-minute in-memory cache
+- Sorting: By creation date, newest first
 
 ## Security
 
 - HubSpot API key is stored securely in Vercel environment variables
-- API requests are proxied through your backend
-- CORS headers are configured for DatoCMS only
+- API requests are proxied through your Vercel backend
+- The API key is never exposed to the frontend
+- CORS headers are properly configured
 
 ## Troubleshooting
 
 **Forms not loading?**
-- Check Vercel logs for API errors
+- Check Vercel function logs for API errors
 - Verify HubSpot API key is correct
 - Ensure private app has `forms` read scope
+- Check browser console for errors
 
 **Plugin not appearing in DatoCMS?**
-- Verify plugin URL is accessible
-- Check browser console for errors
-- Ensure field type is set to "string"
+- Verify the plugin URL is accessible
+- Make sure you're using the root URL (not `/index.html`)
+- Check that the field type is "Single-line string"
+
+**Cache issues?**
+- Click the refresh button to bypass cache
+- Cache automatically expires after 5 minutes
 
 ## License
 
