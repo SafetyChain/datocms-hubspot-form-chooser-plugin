@@ -136,6 +136,27 @@ The plugin uses HubSpot's Marketing API v3:
 - Check that the field type is "Single-line string"
 - See [development guide](docs/DEVELOPMENT.md#testing-checklist)
 
+## Plugin Configuration
+
+### Global Settings
+- **HubSpot API Key**: Your private app token (required)
+- **Filter Archived Forms**: Toggle to hide forms with [archived] in name
+- **Show Creation Dates**: Toggle to display dates in dropdown
+- **Cache Duration**: Set cache timeout (1-168 hours)
+
+### Field Settings
+Apply this plugin to any Single-line string field that should store a HubSpot form ID.
+
+## Marketplace Setup
+
+To prepare this plugin for the DatoCMS marketplace:
+
+1. **Create Required Images**:
+   - `docs/cover.png` - 1200x630px marketplace card
+   - `docs/preview.gif` - Demo of plugin in action
+
+2. **See Full Guide**: [Marketplace Setup Guide](docs/MARKETPLACE_SETUP.md)
+
 ## License
 
 Private plugin for SafetyChain use only.
