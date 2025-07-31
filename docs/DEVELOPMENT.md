@@ -85,21 +85,31 @@ fetch(API_ENDPOINT, {
 
 ### Configuration Screen (src/ConfigScreen.js)
 
-Allows users to securely store their HubSpot API key:
+Allows users to configure plugin settings:
 ```javascript
-// Save API key to plugin parameters
+// Save plugin parameters
 await ctx.updatePluginParameters({
-  hubspotApiKey: apiKey
+  hubspotApiKey: apiKey,
+  filterArchived: filterArchived,
+  showDates: showDates,
+  cacheHours: cacheHours
 });
 ```
+
+Configuration options:
+- **HubSpot API Key**: Secure storage of private app token
+- **Filter Archived**: Toggle to exclude forms with [archived] in name
+- **Show Dates**: Toggle to display form creation dates
+- **Cache Duration**: Set cache timeout from 1-168 hours
 
 ### API Proxy (api/hubspot-forms.js)
 
 Serverless function features:
 - CORS handling for browser requests
 - HubSpot API pagination (up to 2000 forms)
-- 5-minute in-memory cache
+- Configurable in-memory cache (default 24 hours)
 - Automatic sorting by creation date
+- Archive filtering based on plugin settings
 - Error handling and logging
 
 ## Development Workflow
@@ -151,6 +161,16 @@ npm run build
 # - index.html
 ```
 
+### 5. Recent Updates
+
+- **Archived Forms Filter**: API now excludes forms with [archived] in the name
+- **Consistent Typography**: All text uses 14px system font stack
+- **Plugin Title**: Added bold uppercase header
+- **Fixed Height**: Set to 480px to prevent iframe expansion
+- **Configurable Cache**: Cache duration can now be set from 1-168 hours in plugin settings
+- **Settings UI**: Added switches for archive filtering and date display
+- **Logo Integration**: Added SafetyChain and HubSpot logos to settings screen
+
 ## API Integration
 
 ### HubSpot Forms API
@@ -181,14 +201,22 @@ Response structure:
 
 ### Caching Strategy
 
-Simple in-memory cache:
+Configurable in-memory cache:
 ```javascript
-let cache = null;
-let cacheTime = null;
-const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+let cache = {
+  data: null,
+  timestamp: null
+};
 
-if (!forceRefresh && cache && (Date.now() - cacheTime < CACHE_DURATION)) {
-  return cache;
+// Get cache duration from plugin settings (in hours)
+const cacheHours = parseInt(req.query.cacheHours) || 24;
+const CACHE_DURATION = cacheHours * 60 * 60 * 1000; // Convert to milliseconds
+
+if (!forceRefresh && cache.data && cache.timestamp) {
+  const cacheAge = Date.now() - cache.timestamp;
+  if (cacheAge < CACHE_DURATION) {
+    return cache.data;
+  }
 }
 ```
 
@@ -202,17 +230,19 @@ import 'datocms-react-ui/styles.css';
 ```
 
 Custom styles should match DatoCMS:
-- Colors: Use system colors (#0f172a, #64748b, etc.)
+- Colors: Use system colors (#333 for text, #64748b for muted, etc.)
 - Spacing: 8px grid system
 - Border radius: 4px for inputs, 6px for containers
-- Fonts: System fonts, 14px base size
+- Fonts: System font stack, 14px consistent size
+- Font family: `-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif`
 
 ## Performance Considerations
 
-1. **API Calls**: Cached for 5 minutes to reduce load
+1. **API Calls**: Cached for configurable duration (default 24 hours)
 2. **Pagination**: Fetches up to 2000 forms (20 pages)
 3. **Filtering**: Client-side for instant search
 4. **Bundle Size**: ~238KB minified
+5. **Cache Strategy**: Longer cache durations reduce API calls and improve response times
 
 ## Security
 

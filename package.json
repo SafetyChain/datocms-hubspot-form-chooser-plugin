@@ -15,6 +15,12 @@
   ],
   "author": "SafetyChain",
   "license": "MIT",
+  "datoCmsPlugin": {
+    "title": "HubSpot Form Chooser",
+    "coverImage": "docs/cover.png",
+    "previewImage": "docs/preview.gif",
+    "entryPoint": "dist/index.html"
+  },
   "dependencies": {
     "datocms-plugin-sdk": "^1.0.3",
     "datocms-react-ui": "^1.0.3",
@@ -26,6 +32,7 @@
     "@babel/preset-env": "^7.23.0",
     "@babel/preset-react": "^7.22.0",
     "babel-loader": "^9.1.0",
+    "copy-webpack-plugin": "^13.0.0",
     "css-loader": "^6.8.0",
     "html-webpack-plugin": "^5.5.0",
     "style-loader": "^3.3.0",

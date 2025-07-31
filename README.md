@@ -5,11 +5,14 @@ A React-based DatoCMS plugin that allows content editors to select HubSpot forms
 ## Features
 
 - 🔍 **Search forms by name** - Type to filter through your HubSpot forms
-- 🎯 **Smart sorting** - Newest forms appear first
+- 🎯 **Smart sorting** - Newest forms appear first  
 - 🔄 **Real-time updates** - Fetches forms directly from HubSpot API
-- 💾 **5-minute cache** - Reduces API calls for better performance
+- 💾 **Configurable cache** - Set cache duration from 1 hour to 1 week
 - 🎨 **Native DatoCMS UI** - Uses official React components
-- 🔒 **Secure** - API key stored in environment variables
+- 🔒 **Secure** - API key stored in plugin settings
+- 🗂️ **Archive filtering** - Toggle to exclude archived forms
+- 📅 **Date display toggle** - Show/hide form creation dates
+- 📏 **Optimized height** - Fixed 480px to prevent layout issues
 
 ## Setup
 
@@ -94,8 +97,8 @@ npm run build
 
 The plugin automatically:
 - Sorts forms by creation date (newest first)
-- Shows creation date next to each form
-- Caches results for 5 minutes
+- Shows creation date next to each form (configurable)
+- Caches results for the configured duration (default: 24 hours)
 - Saves just the form ID to your DatoCMS field
 
 ## API Details
@@ -103,7 +106,7 @@ The plugin automatically:
 The plugin uses HubSpot's Marketing API v3:
 - Endpoint: `GET /marketing/v3/forms`
 - Pagination: Fetches up to 2000 forms (20 pages)
-- Caching: 5-minute in-memory cache
+- Caching: Configurable in-memory cache (1-168 hours)
 - Sorting: By creation date, newest first
 
 ## Security
@@ -117,6 +120,7 @@ The plugin uses HubSpot's Marketing API v3:
 
 - 📖 [Development Guide](docs/DEVELOPMENT.md) - Architecture, workflow, and patterns
 - 🔧 [Troubleshooting Guide](docs/TROUBLESHOOTING.md) - Common issues and solutions
+- ✅ [Best Practices](docs/BEST_PRACTICES.md) - Proper DatoCMS plugin development practices
 - 🤖 [Claude Context](CLAUDE.md) - AI assistant documentation
 
 ## Quick Troubleshooting

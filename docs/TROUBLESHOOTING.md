@@ -36,7 +36,7 @@ The plugin iframe expands to excessive heights (e.g., 8570px), causing layout is
    - Wrap select in constrained container
 
 ### Current Status
-Multiple height constraints are in place, but the issue may persist due to DatoCMS environment factors.
+Fixed by setting manual height to 480px using `ctx.updateHeight(480)`. The plugin now maintains a consistent height without excessive expansion.
 
 ## Field Value Persistence
 
@@ -118,9 +118,17 @@ Required in Vercel:
 
 ## Known Limitations
 
-1. **Canvas Height**: Limited control over iframe height in DatoCMS
+1. **Canvas Height**: Limited control over iframe height in DatoCMS (resolved with manual height)
 2. **Select Element**: Native select with many options can cause rendering issues
 3. **Auto-resizer**: May calculate incorrect heights with certain content
+
+## Recent Fixes
+
+1. **Archived Forms**: Now automatically filtered out (forms containing [archived] or [archive])
+2. **Typography**: Consistent 14px font size with system font stack
+3. **Plugin Title**: Added "SAFETYCHAIN HUBSPOT FORM SEARCH PLUGIN" header
+4. **Iframe Height**: Fixed at 480px to prevent excessive expansion
+5. **Field Values**: Properly persist and display when editing records
 
 ## Debug Tips
 
@@ -146,3 +154,8 @@ Required in Vercel:
 - [Field Extension Best Practices](https://community.datocms.com/t/field-extension-best-practices/123)
 - [Plugin Development Tips](https://community.datocms.com/t/plugin-development-tips/456)
 - [iframe Auto-resizer Issues](https://github.com/davidjbradshaw/iframe-resizer/issues)
+
+## See Also
+
+- [Best Practices Guide](BEST_PRACTICES.md) - Comprehensive guide on proper DatoCMS plugin development
+- [Development Guide](DEVELOPMENT.md) - Technical development workflow and architecture

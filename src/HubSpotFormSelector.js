@@ -12,11 +12,15 @@ function HubSpotFormSelector({ ctx }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [refreshing, setRefreshing] = useState(false);
   
   // Get current value using lodash get as recommended
   const currentValue = get(ctx.formValues, ctx.fieldPath) || '';
   
   const [selectedForm, setSelectedForm] = useState(currentValue);
+  
+  // Get display settings
+  const showDates = ctx.plugin?.attributes?.parameters?.showDates !== false;
 
   // Use manual height control to ensure proper iframe height
   useEffect(() => {
@@ -43,18 +47,32 @@ function HubSpotFormSelector({ ctx }) {
   }, [currentValue, forms]);
 
   const fetchForms = async (forceRefresh = false) => {
-    setLoading(true);
+    if (forceRefresh) {
+      setRefreshing(true);
+      console.log('Refreshing forms from HubSpot...');
+    } else {
+      setLoading(true);
+    }
     setError(null);
     
     try {
-      // Get API key from plugin parameters
+      // Get API key and settings from plugin parameters
       const apiKey = ctx.plugin?.attributes?.parameters?.hubspotApiKey;
+      const filterArchived = ctx.plugin?.attributes?.parameters?.filterArchived !== false;
+      const cacheHours = ctx.plugin?.attributes?.parameters?.cacheHours || 24;
       
       if (!apiKey) {
         throw new Error('HubSpot API key not configured. Please configure it in the plugin settings.');
       }
       
-      const url = forceRefresh ? `${API_ENDPOINT}?refresh=true` : API_ENDPOINT;
+      const params = new URLSearchParams();
+      if (forceRefresh) params.append('refresh', 'true');
+      params.append('filterArchived', filterArchived.toString());
+      params.append('cacheHours', cacheHours.toString());
+      
+      const url = `${API_ENDPOINT}?${params.toString()}`;
+      console.log('Fetching forms from:', url);
+      
       const response = await fetch(url, {
         headers: {
           'X-HubSpot-API-Key': apiKey
@@ -66,12 +84,18 @@ function HubSpotFormSelector({ ctx }) {
       }
       
       const data = await response.json();
+      console.log(`Received ${data.results?.length || 0} forms`);
       setForms(data.results || []);
+      
+      if (forceRefresh && ctx.notice) {
+        ctx.notice('Forms refreshed successfully!');
+      }
     } catch (err) {
       console.error('Error fetching forms:', err);
       setError(err.message);
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
   };
 
@@ -139,13 +163,21 @@ function HubSpotFormSelector({ ctx }) {
 
   return (
     <Canvas ctx={ctx}>
+      <style>{`
+        @keyframes spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+      `}</style>
+      <div style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif' }}>
       <h2 style={{
-        fontSize: '16px',
-        fontWeight: 'bold',
+        fontSize: '14px',
+        fontWeight: '600',
         textTransform: 'uppercase',
         margin: '0 0 20px 0',
-        color: '#0f172a',
-        letterSpacing: '0.5px'
+        color: '#333',
+        letterSpacing: '0.5px',
+        fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif'
       }}>
         SafetyChain HubSpot Form Search Plugin
       </h2>
@@ -187,13 +219,14 @@ function HubSpotFormSelector({ ctx }) {
           style={{
             width: '100%',
             padding: '12px 16px 12px 44px',
-            fontSize: '15px',
+            fontSize: '14px',
             border: '1px solid #e2e8f0',
             borderRadius: '6px',
             outline: 'none',
             transition: 'border-color 0.2s',
             backgroundColor: '#fff',
-            boxSizing: 'border-box'
+            boxSizing: 'border-box',
+            fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif'
           }}
           onFocus={(e) => {
             e.target.style.borderColor = '#0ea5e9';
@@ -221,14 +254,15 @@ function HubSpotFormSelector({ ctx }) {
             backgroundColor: '#fff',
             height: '200px',
             overflowY: 'auto',
-            cursor: 'pointer'
+            cursor: 'pointer',
+            fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif'
           }}
           size={8}
         >
           <option value="">Choose a form...</option>
           {filteredForms.map(form => (
             <option key={form.id} value={form.id}>
-              {form.name} ({new Date(form.createdAt).toLocaleDateString()})
+              {form.name}{showDates && ` (${new Date(form.createdAt).toLocaleDateString()})`}
             </option>
           ))}
         </select>
@@ -241,7 +275,8 @@ function HubSpotFormSelector({ ctx }) {
           padding: '12px',
           borderRadius: '4px',
           marginBottom: '16px',
-          fontSize: '13px'
+          fontSize: '14px',
+          fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif'
         }}>
           <div style={{ 
             fontWeight: '500',
@@ -266,26 +301,35 @@ function HubSpotFormSelector({ ctx }) {
           onClick={() => fetchForms(true)} 
           size="small"
           buttonType="muted"
-          leftIcon={
+          disabled={refreshing}
+          leftIcon={refreshing ? (
+            <div style={{ animation: 'spin 1s linear infinite' }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M21 2v6h-6M3 12a9 9 0 0 1 15-6.7L21 8M3 22v-6h6M21 12a9 9 0 0 1-15 6.7L3 16" />
+              </svg>
+            </div>
+          ) : (
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M21 2v6h-6M3 12a9 9 0 0 1 15-6.7L21 8M3 22v-6h6M21 12a9 9 0 0 1-15 6.7L3 16" />
             </svg>
-          }
+          )}
         >
-          Refresh
+          {refreshing ? 'Refreshing...' : 'Refresh'}
         </Button>
         
         {forms.length > 0 && (
           <span style={{
-            fontSize: '12px',
+            fontSize: '14px',
             color: '#64748b',
             display: 'flex',
             alignItems: 'center',
-            marginLeft: '8px'
+            marginLeft: '8px',
+            fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif'
           }}>
             {forms.length} forms available
           </span>
         )}
+      </div>
       </div>
     </Canvas>
   );

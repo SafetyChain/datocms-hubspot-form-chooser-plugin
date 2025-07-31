@@ -1,0 +1,49 @@
+{
+  "name": "HubSpot Form Chooser",
+  "description": "Select HubSpot forms by name instead of manually copying form IDs. Features search, caching, and optional archive filtering.",
+  "version": "1.0.0",
+  "author": "SafetyChain",
+  "homepage": "https://github.com/SafetyChain/datocms-hubspot-form-chooser-plugin",
+  "tags": [
+    "hubspot",
+    "forms",
+    "integration",
+    "field-editor"
+  ],
+  "fieldTypes": ["string"],
+  "pluginType": "field_editor",
+  "parameters": {
+    "global": [
+      {
+        "id": "hubspotApiKey",
+        "label": "HubSpot Private App Token",
+        "type": "string",
+        "required": true,
+        "hint": "Enter your HubSpot private app access token with 'forms' read scope"
+      },
+      {
+        "id": "filterArchived",
+        "label": "Filter out archived forms",
+        "type": "boolean",
+        "default": true,
+        "hint": "Hide forms with [archived] or [archive] in their name"
+      },
+      {
+        "id": "showDates",
+        "label": "Show creation dates",
+        "type": "boolean",
+        "default": true,
+        "hint": "Display form creation dates in the dropdown"
+      },
+      {
+        "id": "cacheHours",
+        "label": "Cache Duration (hours)",
+        "type": "integer",
+        "default": 24,
+        "hint": "How long to cache form data before refreshing from HubSpot"
+      }
+    ],
+    "instance": []
+  },
+  "entryPoint": "dist/index.html"
+}

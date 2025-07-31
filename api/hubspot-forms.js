@@ -4,8 +4,6 @@ let cache = {
   timestamp: null
 };
 
-const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes in milliseconds
-
 export default async function handler(req, res) {
   // Enable CORS for the plugin
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -25,6 +23,13 @@ export default async function handler(req, res) {
 
   // Check if we should force refresh
   const forceRefresh = req.query.refresh === 'true';
+  
+  // Check if we should filter archived forms (default to true for backward compatibility)
+  const filterArchived = req.query.filterArchived !== 'false';
+  
+  // Get cache duration from query param (in hours) or default to 24 hours
+  const cacheHours = parseInt(req.query.cacheHours) || 24;
+  const CACHE_DURATION = cacheHours * 60 * 60 * 1000; // Convert hours to milliseconds
 
   // Check cache
   if (!forceRefresh && cache.data && cache.timestamp) {
@@ -84,24 +89,26 @@ export default async function handler(req, res) {
 
     console.log(`Fetched ${allForms.length} forms across ${pageCount} pages`);
 
-    // Filter out archived forms
-    const activeForms = allForms.filter(form => {
-      const name = form.name.toLowerCase();
-      return !name.includes('[archived]') && !name.includes('[archive]');
-    });
-
-    console.log(`Filtered to ${activeForms.length} active forms (removed ${allForms.length - activeForms.length} archived)`);
+    // Filter out archived forms if enabled
+    let processedForms = allForms;
+    if (filterArchived) {
+      processedForms = allForms.filter(form => {
+        const name = form.name.toLowerCase();
+        return !name.includes('[archived]') && !name.includes('[archive]');
+      });
+      console.log(`Filtered to ${processedForms.length} active forms (removed ${allForms.length - processedForms.length} archived)`);
+    }
 
     // Sort forms by creation date (newest first)
-    activeForms.sort((a, b) => {
+    processedForms.sort((a, b) => {
       const dateA = new Date(a.createdAt || 0);
       const dateB = new Date(b.createdAt || 0);
       return dateB - dateA; // Newest first
     });
 
     const responseData = { 
-      results: activeForms,
-      total: activeForms.length 
+      results: processedForms,
+      total: processedForms.length 
     };
 
     // Update cache
