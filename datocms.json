@@ -2,7 +2,7 @@
   "name": "HubSpot Form Chooser",
   "description": "Select HubSpot forms by name instead of manually copying form IDs. Features search, caching, and optional archive filtering.",
   "version": "1.2.0",
-  "author": "SafetyChain",
+  "author": "Derrick Threatt, Director of MarOps at SafetyChain",
   "homepage": "https://github.com/SafetyChain/datocms-hubspot-form-chooser-plugin",
   "tags": [
     "hubspot",
