@@ -1,5 +1,9 @@
 # DatoCMS HubSpot Form Chooser Plugin
 
+[![Version](https://img.shields.io/badge/version-1.2.0-blue.svg)](https://github.com/SafetyChain/datocms-hubspot-form-chooser-plugin/releases)
+[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+[![DatoCMS](https://img.shields.io/badge/DatoCMS-plugin-ff7751.svg)](https://www.datocms.com)
+
 A React-based DatoCMS plugin that allows content editors to select HubSpot forms by name instead of manually copying form IDs.
 
 ## Features
@@ -157,6 +161,23 @@ To prepare this plugin for the DatoCMS marketplace:
 
 2. **See Full Guide**: [Marketplace Setup Guide](docs/MARKETPLACE_SETUP.md)
 
+## Changelog
+
+See [CHANGELOG.md](CHANGELOG.md) for a detailed history of changes.
+
+### Latest Version: 1.2.0
+- Added configurable cache timeout (1-168 hours)
+- Improved marketplace setup with proper cover image
+- Enhanced documentation
+
+## Contributing
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
 ## License
 
-Private plugin for SafetyChain use only.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.

@@ -1,6 +1,6 @@
 {
   "name": "datocms-hubspot-form-chooser-plugin",
-  "version": "1.0.0",
+  "version": "1.2.0",
   "description": "DatoCMS plugin to select HubSpot forms",
   "main": "index.js",
   "scripts": {
@@ -10,11 +10,23 @@
   },
   "keywords": [
     "datocms",
+    "datocms-plugin",
     "hubspot",
-    "plugin"
+    "forms",
+    "integration",
+    "field-editor",
+    "marketing"
   ],
   "author": "SafetyChain",
   "license": "MIT",
+  "homepage": "https://github.com/SafetyChain/datocms-hubspot-form-chooser-plugin",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/SafetyChain/datocms-hubspot-form-chooser-plugin.git"
+  },
+  "bugs": {
+    "url": "https://github.com/SafetyChain/datocms-hubspot-form-chooser-plugin/issues"
+  },
   "datoCmsPlugin": {
     "title": "HubSpot Form Chooser",
     "coverImage": "docs/cover.png",
