@@ -138,6 +138,47 @@ Required in Vercel:
 4. Ensure plugin URL is accessible (no auth required)
 5. Verify field type is "Single-line string"
 
+## Security Issues
+
+### Problem
+"HubSpot API key not provided" or authentication errors.
+
+### Common Causes
+1. API key not configured in plugin settings
+2. API key revoked or expired
+3. Incorrect permissions on private app
+4. Token format is incorrect
+
+### Solutions
+
+1. **Verify API Key Configuration**
+   ```javascript
+   // Check in ConfigScreen that key is saved
+   const apiKey = ctx.plugin?.attributes?.parameters?.hubspotApiKey;
+   ```
+
+2. **Validate Token Format**
+   - Should start with `pat-na1-` or similar
+   - Full format: `pat-na1-xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx`
+
+3. **Check HubSpot Permissions**
+   - Login to HubSpot → Settings → Private Apps
+   - Verify app has `forms` (read) permission
+   - Check if token is still active
+
+4. **Test API Key**
+   ```bash
+   # Test directly with curl
+   curl -H "Authorization: Bearer YOUR_API_KEY" \
+     https://api.hubapi.com/marketing/v3/forms
+   ```
+
+### Prevention
+- Rotate API keys every 90 days
+- Monitor HubSpot API usage regularly
+- Keep a secure backup of working tokens
+- Document which DatoCMS projects use which tokens
+
 ## Related Documentation
 
 ### DatoCMS Resources

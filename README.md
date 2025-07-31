@@ -115,10 +115,14 @@ The plugin uses HubSpot's Marketing API v3:
 
 ## Security
 
-- HubSpot API key is stored securely in Vercel environment variables
+- HubSpot API key is stored securely in DatoCMS plugin parameters
 - API requests are proxied through your Vercel backend
 - The API key is never exposed to the frontend
 - CORS headers are properly configured
+
+### 🔒 Security Documentation
+- [Security Guidelines](SECURITY.md) - Comprehensive security documentation
+- [Security Setup Guide](docs/SECURITY_SETUP.md) - Quick setup with best practices
 
 ## Documentation
 
